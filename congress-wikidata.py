@@ -15,6 +15,7 @@ class CongWikidata:
     opensecrets_prop = 'P2686'
     youtube_channel_prop = 'P2397'
     twitter_prop = 'P2002'
+    instagram_prop = 'P2003'
     facebook_prop = 'P2013'
     # create a claim to be used as the source for the data
     reference_url = 'https://github.com/unitedstates/congress-legislators'
@@ -64,7 +65,7 @@ for legislator in legislators:
 bkeys = bio.keys()
 social = yaml.safe_load(open('congress-legislators/legislators-social-media.yaml'))
 for s in social:
-    facebook = twitter = youtube_channel_id = False
+    facebook = twitter = youtube_channel_id = instagram = False
     bio_id = s['id']['bioguide']
     print bio_id
     if bio_id and (bio_id in bkeys):
@@ -80,5 +81,8 @@ for s in social:
             if 'twitter' in skeys:
                 twitter = s['social']['twitter']
                 cong.mk_claim(wikidata_item, cong.twitter_prop, twitter)
+            if 'instagram' in skeys:
+                instagram = s['social']['instagram']
+                cong.mk_claim(wikidata_item, cong.instagram_prop, instagram)
     else:
         print 'non current bio_id found: ' + bio_id
