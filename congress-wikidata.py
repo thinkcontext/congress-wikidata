@@ -25,7 +25,12 @@ class CongWikidata:
     reference_url_prop = 'P854'
     reference_url_claim = pywikibot.Claim(repo, reference_url_prop)
     reference_url_claim.setTarget(reference_url)
-    def item_from_qid(self,qid,TEST=True):
+    def set_claim_and_source(self,item,prop,val):
+        claim = pywikibot.Claim(self.repo, prop)
+        claim.setTarget(val)
+        item.addClaim(claim)
+        claim.addSource(self.reference_url_claim)
+    def item_from_qid(self,qid,TEST=False):
         # retrieve a Wikidata item from a Q id
         if TEST:
             item = pywikibot.ItemPage(self.repo, self.sandbox_id)
@@ -33,19 +38,23 @@ class CongWikidata:
             item = pywikibot.ItemPage(self.repo, qid)
         item.get()
         return item
-    def mk_claim(self,item,prop,val):
-        # insert the data, in the form of a claim for a property with a source
+    def mk_claim(self,item,prop,val,allow_dupe=False):
+        # insert the data
+        # by default if a property already has a claim do nothing but
+        # if allow_dupe is true add it if its a unique value
         if(val and type(val) == type('a') and len(val) == 0):
             print 'val has no length'
             return False
         claims = item.claims.keys()
-        if prop in claims:
+        if prop in claims and not allow_dupe:
             print 'already have ' + prop
+        elif prop in claims and allow_dupe:
+            for c in item.claims[prop]:
+                if val == c.target:
+                    return False
+            self.set_claim_and_source(item,prop,val)
         else:
-            claim = pywikibot.Claim(self.repo, prop)
-            claim.setTarget(val)
-            item.addClaim(claim)
-            claim.addSource(self.reference_url_claim)
+            self.set_claim_and_source(item,prop,val)
 
 def dict_items(dict):
     d = {}
@@ -127,7 +136,7 @@ for legislator in legislators:
             if l.data['fec'] and len(l.data['fec']) > 0:
                 for fec in l.data['fec']:
                     print 'fec ' + fec
-                    cong.mk_claim(wikidata_item, cong.fec_prop, fec)
+                    cong.mk_claim(wikidata_item, cong.fec_prop, fec, True)
         else:
             print "unable to retrieve a wikidata item for: " + l.data['wikidata']
     else:
